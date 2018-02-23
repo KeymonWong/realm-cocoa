@@ -881,7 +881,7 @@ public class PermissionRole: Object {
     /// The name of the Role
     @objc dynamic public var name = ""
     /// The users which belong to the role
-    let users = List<PermissionUser>()
+    public let users = List<PermissionUser>()
 
     /// :nodoc:
     @objc override public class func _realmObjectName() -> String {
@@ -1216,5 +1216,17 @@ extension Realm {
     */
     public func getPrivileges(forClassNamed className: String) -> ClassPrivileges {
         return ClassPrivileges(rawValue: RLMGetComputedPermissions(rlmRealm, className))
+    }
+}
+
+extension List where Element == Permission {
+    public func findOrCreate(forRoleNamed roleName: String) -> Permission {
+        if let existing = self.filter("role.name = %@", roleName).first {
+            return existing
+        }
+        let role = realm!.create(PermissionRole.self, value: [roleName], update: true)
+        let permission = realm!.create(Permission.self, value: ["role": role])
+        append(permission)
+        return permission
     }
 }
